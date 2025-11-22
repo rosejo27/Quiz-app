@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>재미있는 퀴즈 앱 🎯</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-25px); }
+        }
+        @keyframes ping {
+            75%, 100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .animate-bounce {
+            animation: bounce 1s infinite;
+        }
+        .animate-ping {
+            animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // 별 아이콘 SVG 컴포넌트
+        const Star = ({ className, size = 24, style, fill = "none" }) => (
+            <svg 
+                className={className}
+                style={style}
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill={fill}
+                stroke="currentColor" 
+                strokeWidth="2"
+            >
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+        );
+
+        // 트로피 아이콘 SVG 컴포넌트
+        const Trophy = ({ className, size = 24 }) => (
+            <svg 
+                className={className}
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2"
+            >
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                <path d="M4 22h16" />
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+            </svg>
+        );
+
+        function QuizApp() {
+            const [showQuiz, setShowQuiz] = useState(false);
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [selectedAnswer, setSelectedAnswer] = useState(null);
+            const [showCelebration, setShowCelebration] = useState(false);
+            const [score, setScore] = useState(0);
+            const [stars, setStars] = useState([]);
+            const [quizComplete, setQuizComplete] = useState(false);
+
+            // 예시 퀴즈 문제
+            const questions = [
+                {
+                    question: "지구에서 가장 큰 대륙은 무엇일까요?",
+                    options: ["아프리카", "아시아", "유럽", "아메리카"],
+                    correct: 1
+                },
+                {
+                    question: "물의 화학 기호는 무엇일까요?",
+                    options: ["O2", "H2O", "CO2", "N2"],
+                    correct: 1
+                },
+                {
+                    question: "태양계에서 가장 큰 행성은?",
+                    options: ["지구", "화성", "목성", "토성"],
+                    correct: 2
+                },
+                {
+                    question: "빛의 3원색은 무엇일까요?",
+                    options: ["빨강, 파랑, 노랑", "빨강, 초록, 파랑", "주황, 초록, 보라", "빨강, 노랑, 검정"],
+                    correct: 1
+                }
+            ];
+
+            // 정답 클릭 시 별 애니메이션 생성
+            const createStars = () => {
+                const newStars = [];
+                for (let i = 0; i < 20; i++) {
+                    newStars.push({
+                        id: Math.random(),
+                        left: Math.random() * 100,
+                        top: 20 + Math.random() * 60,
+                        delay: Math.random() * 0.5
+                    });
+                }
+                setStars(newStars);
+            };
+
+            const handleAnswer = (index) => {
+                setSelectedAnswer(index);
+                
+                if (index === questions[currentQuestion].correct) {
+                    // 정답!
+                    setShowCelebration(true);
+                    createStars();
+                    setScore(score + 1);
+                    
+                    setTimeout(() => {
+                        setShowCelebration(false);
+                        if (currentQuestion < questions.length - 1) {
+                            setCurrentQuestion(currentQuestion + 1);
+                            setSelectedAnswer(null);
+                            setStars([]);
+                        } else {
+                            setQuizComplete(true);
+                        }
+                    }, 2000);
+                } else {
+                    // 오답
+                    setTimeout(() => {
+                        setSelectedAnswer(null);
+                    }, 1000);
+                }
+            };
+
+            const resetQuiz = () => {
+                setCurrentQuestion(0);
+                setSelectedAnswer(null);
+                setScore(0);
+                setQuizComplete(false);
+                setShowQuiz(true);
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-8">
+                    {/* 시작 버튼 */}
+                    {!showQuiz && !quizComplete && (
+                        <div className="flex items-center justify-center min-h-screen">
+                            <div className="text-center">
+                                <h1 className="text-5xl font-bold text-purple-700 mb-8 animate-bounce">
+                                    🎯 재미있는 퀴즈 시간! 🎯
+                                </h1>
+                                <button
+                                    onClick={() => setShowQuiz(true)}
+                                    className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-3xl font-bold py-6 px-12 rounded-full shadow-2xl hover:scale-110 transform transition-all duration-300"
+                                >
+                                    퀴즈 시작하기! 🚀
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 모달형 퀴즈 */}
+                    {showQuiz && !quizComplete && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+                            <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full mx-4 p-8 relative overflow-hidden">
+                                {/* 진행 바 */}
+                                <div className="mb-6">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-xl font-bold text-purple-600">
+                                            문제 {currentQuestion + 1} / {questions.length}
+                                        </span>
+                                        <span className="text-xl font-bold text-pink-600">
+                                            ⭐ 점수: {score}
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-4">
+                                        <div
+                                            className="bg-gradient-to-r from-purple-500 to-pink-500 h-4 rounded-full transition-all duration-500"
+                                            style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+
+                                {/* 질문 */}
+                                <div className="mb-8 bg-gradient-to-r from-yellow-100 to-orange-100 p-6 rounded-2xl border-4 border-yellow-300">
+                                    <h2 className="text-3xl font-bold text-gray-800 text-center">
+                                        {questions[currentQuestion].question}
+                                    </h2>
+                                </div>
+
+                                {/* 답변 옵션 */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {questions[currentQuestion].options.map((option, index) => {
+                                        const isSelected = selectedAnswer === index;
+                                        const isCorrect = index === questions[currentQuestion].correct;
+                                        const showResult = selectedAnswer !== null;
+
+                                        let buttonClass = "text-2xl font-bold py-6 px-8 rounded-2xl transition-all duration-300 transform ";
+                                        
+                                        if (!showResult) {
+                                            buttonClass += "bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 hover:scale-105 text-white shadow-lg cursor-pointer";
+                                        } else if (isSelected && isCorrect) {
+                                            buttonClass += "bg-gradient-to-r from-green-400 to-green-500 text-white scale-105 shadow-2xl";
+                                        } else if (isSelected && !isCorrect) {
+                                            buttonClass += "bg-gradient-to-r from-red-400 to-red-500 text-white scale-95";
+                                        } else {
+                                            buttonClass += "bg-gray-300 text-gray-500";
+                                        }
+
+                                        return (
+                                            <button
+                                                key={index}
+                                                onClick={() => handleAnswer(index)}
+                                                disabled={selectedAnswer !== null}
+                                                className={buttonClass}
+                                            >
+                                                {option}
+                                                {showResult && isSelected && isCorrect && ' ✓'}
+                                                {showResult && isSelected && !isCorrect && ' ✗'}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* 축하 애니메이션 */}
+                                {showCelebration && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        <div className="text-9xl animate-bounce">🎉</div>
+                                        {stars.map(star => (
+                                            <Star
+                                                key={star.id}
+                                                className="absolute text-yellow-400 animate-ping"
+                                                size={32}
+                                                style={{
+                                                    left: `${star.left}%`,
+                                                    top: `${star.top}%`,
+                                                    animationDelay: `${star.delay}s`
+                                                }}
+                                                fill="currentColor"
+                                            />
+                                        ))}
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <div className="bg-white bg-opacity-90 rounded-3xl p-8 shadow-2xl animate-pulse">
+                                                <p className="text-6xl font-bold text-green-600">정답이에요! 🎊</p>
+                                                <p className="text-3xl text-purple-600 mt-4">정말 잘했어요! ⭐</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 완료 화면 */}
+                    {quizComplete && (
+                        <div className="fixed inset-0 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 flex items-center justify-center z-50">
+                            <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 p-12 text-center">
+                                <Trophy className="mx-auto text-yellow-500 animate-bounce mb-6" size={128} />
+                                <h1 className="text-6xl font-bold text-purple-700 mb-6">
+                                    퀴즈 완료! 🎉
+                                </h1>
+                                <p className="text-4xl font-bold text-pink-600 mb-4">
+                                    최종 점수: {score} / {questions.length}
+                                </p>
+                                <div className="flex justify-center gap-4 mb-8">
+                                    {[...Array(score)].map((_, i) => (
+                                        <Star key={i} size={64} className="text-yellow-400" fill="currentColor" />
+                                    ))}
+                                </div>
+                                <p className="text-3xl text-gray-700 mb-8">
+                                    {score === questions.length ? "완벽해요! 천재인가요? 🌟" :
+                                     score >= questions.length / 2 ? "잘했어요! 계속 노력해요! 💪" :
+                                     "다시 도전해봐요! 할 수 있어요! 🚀"}
+                                </p>
+                                <button
+                                    onClick={resetQuiz}
+                                    className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-3xl font-bold py-6 px-12 rounded-full shadow-2xl hover:scale-110 transform transition-all duration-300"
+                                >
+                                    다시 도전하기! 🔄
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // React 앱 렌더링
+        ReactDOM.render(<QuizApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
